@@ -1,0 +1,6 @@
+/.idea
+/.vs
+/obj
+/out
+*.filters
+*.user
