@@ -10,9 +10,9 @@
         }                                   \
     } while (0)
 
-#define IFR_WIN32_BOOL(x)                              \
+#define IFR_WIN32_LRESULT(x)                           \
     do {                                               \
-        BOOL ok = (x);                                 \
+        LRESULT ok = (x);                              \
         if (!ok) {                                     \
             return HRESULT_FROM_WIN32(GetLastError()); \
         }                                              \
@@ -28,6 +28,6 @@ DWORD mainCRTStartup(void)
     IFR_WIN32(RegSetKeyValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", L"AppsUseLightTheme", REG_DWORD, &light, sizeof(light)));
     IFR_WIN32(RegSetKeyValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", L"SystemUsesLightTheme", REG_DWORD, &light, sizeof(light)));
 
-    IFR_WIN32_BOOL(SendNotifyMessageW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)L"ImmersiveColorSet"));
+    IFR_WIN32_LRESULT(SendMessageTimeoutW(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)L"ImmersiveColorSet", SMTO_ABORTIFHUNG, 5000, NULL));
     return 0;
 }
