@@ -141,6 +141,7 @@ static DWORD do_register_time(int argc, wchar_t** argv)
     ITaskSettings* pSettings = NULL;
     IFR(pTask->lpVtbl->get_Settings(pTask, &pSettings));
     IFR(pSettings->lpVtbl->put_AllowDemandStart(pSettings, VARIANT_FALSE));
+    IFR(pSettings->lpVtbl->put_Hidden(pSettings, VARIANT_TRUE));
     IFR(pSettings->lpVtbl->put_StartWhenAvailable(pSettings, VARIANT_TRUE));
 
     // Get the current user ID.
@@ -257,6 +258,7 @@ static DWORD do_register_position(int argc, wchar_t** argv)
     ITaskSettings* pSettings = NULL;
     IFR(pTask->lpVtbl->get_Settings(pTask, &pSettings));
     IFR(pSettings->lpVtbl->put_AllowDemandStart(pSettings, VARIANT_FALSE));
+    IFR(pSettings->lpVtbl->put_Hidden(pSettings, VARIANT_TRUE));
     IFR(pSettings->lpVtbl->put_StartWhenAvailable(pSettings, VARIANT_TRUE));
 
     // Get the current user ID.
