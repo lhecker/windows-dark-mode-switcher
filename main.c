@@ -33,6 +33,20 @@
         }                                              \
     } while (0)
 
+// If Failed Return, BSTR allocations and interface put methods that require a single BSTR
+#define IFR_PUT_BSTR(p_interface_, put_method_, str_)                       \
+    do {                                                                    \
+        BSTR bstr = SysAllocString(str_);                                   \
+        if (!bstr) {                                                        \
+            return E_OUTOFMEMORY;                                           \
+        }                                                                   \
+        HRESULT hr = p_interface_->lpVtbl->put_method_(p_interface_, bstr); \
+        SysFreeString(bstr);                                                \
+        if (FAILED(hr)) {                                                   \
+            return hr;                                                      \
+        }                                                                   \
+    } while (0)
+
 static void print_stdout(const char* str, size_t len)
 {
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), str, (DWORD)len, NULL, NULL);
@@ -70,38 +84,29 @@ static HRESULT add_daily_trigger(ITriggerCollection* pTriggerCollection, const S
     IFR(pTriggerCollection->lpVtbl->Create(pTriggerCollection, TASK_TRIGGER_DAILY, &pTrigger));
     IDailyTrigger* pDailyTrigger = NULL;
     IFR(pTrigger->lpVtbl->QueryInterface(pTrigger, &IID_IDailyTrigger, (void**)&pDailyTrigger));
-    IFR(pDailyTrigger->lpVtbl->put_ExecutionTimeLimit(pDailyTrigger, SysAllocString(L"PT1M")));
+    IFR_PUT_BSTR(pDailyTrigger, put_ExecutionTimeLimit, L"PT1M");
     wchar_t time_buffer[20];
     time_to_string(time_buffer, ARRAYSIZE(time_buffer), p_time);
-    IFR(pDailyTrigger->lpVtbl->put_StartBoundary(pDailyTrigger, SysAllocString(time_buffer)));
+    IFR_PUT_BSTR(pDailyTrigger, put_StartBoundary, time_buffer);
     IFR(pDailyTrigger->lpVtbl->put_DaysInterval(pDailyTrigger, 1));
 
     return 0;
 }
 
-static BSTR get_exe_path()
+static wchar_t* get_exe_path(wchar_t* buf, DWORD cap)
 {
-    wchar_t exe_path_buf[64 * 1024];
-    DWORD cap = ARRAYSIZE(exe_path_buf);
-    DWORD len = GetModuleFileNameW(NULL, exe_path_buf, cap);
+    DWORD len = GetModuleFileNameW(NULL, buf, cap);
     if (len == 0 || len >= cap) {
         return NULL;
     }
-    return SysAllocString(exe_path_buf);
+    return buf;
 }
 
 static HRESULT register_schtask(const SYSTEMTIME* p_sunrise, const SYSTEMTIME* p_sunset, const wchar_t* action_args)
 {
-    BSTR exe_path = get_exe_path();
-    if (!exe_path) {
-        return HRESULT_FROM_WIN32(GetLastError());
-    }
-
     wchar_t user_id[256];
     DWORD user_id_size = ARRAYSIZE(user_id);
     IFR_WIN32_BOOL(GetUserNameW(user_id, &user_id_size));
-
-    IFR(CoInitializeEx(NULL, COINIT_MULTITHREADED));
 
     ITaskService* pService = NULL;
     IFR(CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void**)&pService));
@@ -120,7 +125,7 @@ static HRESULT register_schtask(const SYSTEMTIME* p_sunrise, const SYSTEMTIME* p
     // Get the current user ID.
     IPrincipal* pPrincipal = NULL;
     IFR(pTask->lpVtbl->get_Principal(pTask, &pPrincipal));
-    IFR(pPrincipal->lpVtbl->put_UserId(pPrincipal, SysAllocString(user_id)));
+    IFR_PUT_BSTR(pPrincipal, put_UserId, user_id);
     IFR(pPrincipal->lpVtbl->put_LogonType(pPrincipal, TASK_LOGON_INTERACTIVE_TOKEN));
 
     ITriggerCollection* pTriggerCollection = NULL;
@@ -139,19 +144,40 @@ static HRESULT register_schtask(const SYSTEMTIME* p_sunrise, const SYSTEMTIME* p
     IFR(pActionCollection->lpVtbl->Create(pActionCollection, TASK_ACTION_EXEC, &pAction));
     IExecAction* pExecAction = NULL;
     IFR(pAction->lpVtbl->QueryInterface(pAction, &IID_IExecAction, (void**)&pExecAction));
-    IFR(pExecAction->lpVtbl->put_Path(pExecAction, exe_path));
-    IFR(pExecAction->lpVtbl->put_Arguments(pExecAction, SysAllocString(action_args)));
+    wchar_t exe_path_buf[64 * 1024];
+    wchar_t* exe_path = get_exe_path(exe_path_buf, ARRAYSIZE(exe_path_buf));
+    if (!exe_path) {
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+    IFR_PUT_BSTR(pExecAction, put_Path, exe_path);
+    IFR_PUT_BSTR(pExecAction, put_Arguments, action_args);
 
     // Save the task in the root folder.
+    BSTR bstr_root_folder = SysAllocString(L"\\");
+    if (!bstr_root_folder) {
+        return E_OUTOFMEMORY;
+    }
     ITaskFolder* pRootFolder = NULL;
-    IFR(pService->lpVtbl->GetFolder(pService, SysAllocString(L"\\"), &pRootFolder));
+    HRESULT hr_get_folder = pService->lpVtbl->GetFolder(pService, bstr_root_folder, &pRootFolder);
+    SysFreeString(bstr_root_folder);
+    if (FAILED(hr_get_folder)) {
+        return hr_get_folder;
+    }
+    BSTR bstr_task_name = SysAllocString(L"Dark Mode Switcher");
+    if (!bstr_task_name) {
+        return E_OUTOFMEMORY;
+    }
     IRegisteredTask* pRegisteredTask = NULL;
-    IFR(pRootFolder->lpVtbl->RegisterTaskDefinition(pRootFolder, SysAllocString(L"Dark Mode Switcher"), pTask, TASK_CREATE_OR_UPDATE, (VARIANT){0}, (VARIANT){0}, TASK_LOGON_INTERACTIVE_TOKEN, (VARIANT){0}, &pRegisteredTask));
+    HRESULT hr_register = pRootFolder->lpVtbl->RegisterTaskDefinition(pRootFolder, bstr_task_name, pTask, TASK_CREATE_OR_UPDATE, (VARIANT){0}, (VARIANT){0}, TASK_LOGON_INTERACTIVE_TOKEN, (VARIANT){0}, &pRegisteredTask);
+    SysFreeString(bstr_task_name);
+    if (FAILED(hr_register)) {
+        return hr_register;
+    }
 
     return 0;
 }
 
-static DWORD do_switch(int argc, wchar_t** argv)
+static HRESULT do_switch(int argc, wchar_t** argv)
 {
     SYSTEMTIME sunrise, sunset;
     if (!string_to_time(&sunrise, get_arg(argc, argv, 2, L"")) || !string_to_time(&sunset, get_arg(argc, argv, 3, L""))) {
@@ -173,7 +199,7 @@ static DWORD do_switch(int argc, wchar_t** argv)
     return update_light_mode(light);
 }
 
-static DWORD do_register_time(int argc, wchar_t** argv)
+static HRESULT do_register_time(int argc, wchar_t** argv)
 {
     SYSTEMTIME time;
     GetLocalTime(&time);
@@ -203,7 +229,7 @@ static DWORD do_register_time(int argc, wchar_t** argv)
     return register_schtask(&sunrise, &sunset, args);
 }
 
-static DWORD do_register_position(int argc, wchar_t** argv)
+static HRESULT do_register_position(int argc, wchar_t** argv)
 {
     double lat = 0.0, lon = 0.0;
     if (!string_to_coordinate(&lat, get_arg(argc, argv, 2, L"_"), 90.0, -90.0) || !string_to_coordinate(&lon, get_arg(argc, argv, 3, L"_"), 180.0, -180.0)) {
@@ -246,7 +272,7 @@ static DWORD do_register_position(int argc, wchar_t** argv)
     return register_schtask(&nextrise, &nextset, args);
 }
 
-static DWORD do_help(DWORD status)
+static int do_help(int status)
 {
     print_stdout_lit(
         "Usage: dark-mode-switcher.exe <COMMAND>\r\n"
@@ -273,10 +299,16 @@ int wmain(int argc, wchar_t* argv[])
         return do_switch(argc, argv);
     }
     if (string_equal(argv1, L"registertime")) {
-        return do_register_time(argc, argv);
+        IFR(CoInitializeEx(NULL, COINIT_MULTITHREADED));
+        const int status = do_register_time(argc, argv);
+        CoUninitialize();
+        return status;
     }
     if (string_equal(argv1, L"registerposition")) {
-        return do_register_position(argc, argv);
+        IFR(CoInitializeEx(NULL, COINIT_MULTITHREADED));
+        const int status = do_register_position(argc, argv);
+        CoUninitialize();
+        return status;
     }
     if (string_equal(argv1, L"help") || string_equal(argv1, L"-h") || string_equal(argv1, L"--help")) {
         return do_help(0);
