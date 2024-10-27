@@ -113,6 +113,7 @@ static HRESULT register_schtask(const SYSTEMTIME* p_sunrise, const SYSTEMTIME* p
     ITaskSettings* pSettings = NULL;
     IFR(pTask->lpVtbl->get_Settings(pTask, &pSettings));
     IFR(pSettings->lpVtbl->put_AllowDemandStart(pSettings, VARIANT_FALSE));
+    IFR(pSettings->lpVtbl->put_DisallowStartIfOnBatteries(pSettings, VARIANT_FALSE));
     IFR(pSettings->lpVtbl->put_Hidden(pSettings, VARIANT_TRUE));
     IFR(pSettings->lpVtbl->put_StartWhenAvailable(pSettings, VARIANT_TRUE));
 
@@ -130,14 +131,6 @@ static HRESULT register_schtask(const SYSTEMTIME* p_sunrise, const SYSTEMTIME* p
 
     //  Add the sunset trigger to the task.
     IFR(add_daily_trigger(pTriggerCollection, p_sunset));
-
-    //  Add the logon trigger to the task.
-    ITrigger* pTriggerLogon = NULL;
-    IFR(pTriggerCollection->lpVtbl->Create(pTriggerCollection, TASK_TRIGGER_LOGON, &pTriggerLogon));
-    ILogonTrigger* pLogonTrigger = NULL;
-    IFR(pTriggerLogon->lpVtbl->QueryInterface(pTriggerLogon, &IID_ILogonTrigger, (void**)&pLogonTrigger));
-    IFR(pLogonTrigger->lpVtbl->put_ExecutionTimeLimit(pLogonTrigger, SysAllocString(L"PT1M")));
-    IFR(pLogonTrigger->lpVtbl->put_UserId(pLogonTrigger, SysAllocString(user_id)));
 
     // Add an action to the task.
     IActionCollection* pActionCollection = NULL;
