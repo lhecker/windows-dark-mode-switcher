@@ -222,7 +222,7 @@ static HRESULT do_register_time(int argc, wchar_t** argv)
     IFR(update_light_mode(light));
 
     // prepare task arguments
-    wchar_t args[20] = L"switch            "; // keep the number of spaces! the task only switchs the mode, so the command to run is `switch`
+    wchar_t args[20] = L"switch            "; // keep the number of spaces! the task only switches the mode, so the command to run is `switch`
     memcpy(&args[7], argv[2], 10);            // insert sunrise
     memcpy(&args[13], argv[3], 10);           // insert sunset
 
@@ -286,7 +286,7 @@ static int do_help(int status)
         "    Sets a scheduled task for the light/dark switch mode. SUNRISE and SUNSET must be in the HH:mm 24-hour format.\r\n"
         "  registerposition <LATITUDE> <LONGITUDE>\r\n"
         "    Dynamically sets a scheduled task switching the light/dark mode based on the geographic coordinates.\r\n"
-        "    LATITUDE and LONGITUDE must be in the Digital Degrees format.\r\n"
+        "    LATITUDE and LONGITUDE must be in the Decimal Degrees format.\r\n"
     );
     return status;
 }
