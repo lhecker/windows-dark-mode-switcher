@@ -120,7 +120,6 @@ static HRESULT register_schtask(const SYSTEMTIME* p_sunrise, const SYSTEMTIME* p
     IFR(pSettings->lpVtbl->put_AllowDemandStart(pSettings, VARIANT_FALSE));
     IFR(pSettings->lpVtbl->put_DisallowStartIfOnBatteries(pSettings, VARIANT_FALSE));
     IFR(pSettings->lpVtbl->put_Hidden(pSettings, VARIANT_TRUE));
-    IFR(pSettings->lpVtbl->put_StartWhenAvailable(pSettings, VARIANT_TRUE));
 
     // Get the current user ID.
     IPrincipal* pPrincipal = NULL;
@@ -130,6 +129,21 @@ static HRESULT register_schtask(const SYSTEMTIME* p_sunrise, const SYSTEMTIME* p
 
     ITriggerCollection* pTriggerCollection = NULL;
     IFR(pTask->lpVtbl->get_Triggers(pTask, &pTriggerCollection));
+
+    //  Add the logon trigger to the task.
+    ITrigger* pTriggerLogon = NULL;
+    IFR(pTriggerCollection->lpVtbl->Create(pTriggerCollection, TASK_TRIGGER_LOGON, &pTriggerLogon));
+    ILogonTrigger* pLogonTrigger = NULL;
+    IFR(pTriggerLogon->lpVtbl->QueryInterface(pTriggerLogon, &IID_ILogonTrigger, (void**)&pLogonTrigger));
+    IFR_PUT_BSTR(pLogonTrigger, put_ExecutionTimeLimit, L"PT1M");
+    IFR_PUT_BSTR(pLogonTrigger, put_UserId, user_id);
+
+    //  Add an event trigger to the task that fires when the computer resumes from hibernation mode.
+    ITrigger* pTriggerEvent = NULL;
+    IFR(pTriggerCollection->lpVtbl->Create(pTriggerCollection, TASK_TRIGGER_EVENT, &pTriggerEvent));
+    IEventTrigger* pEventTrigger = NULL;
+    IFR(pTriggerEvent->lpVtbl->QueryInterface(pTriggerEvent, &IID_IEventTrigger, (void**)&pEventTrigger));
+    IFR_PUT_BSTR(pEventTrigger, put_Subscription, L"<QueryList><Query Id=\"0\" Path=\"System\"><Select Path=\"System\">*[System[Provider[@Name='Microsoft-Windows-Power-Troubleshooter'] and (Level=4 or Level=0) and (EventID=1)]]</Select></Query></QueryList>");
 
     //  Add the sunrise trigger to the task.
     IFR(add_daily_trigger(pTriggerCollection, p_sunrise));
