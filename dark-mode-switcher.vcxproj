@@ -19,15 +19,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="converters.c" />
-    <ClCompile Include="main.c" />
-    <ClCompile Include="suncourse.c" />
+    <ResourceCompile Include="src\resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="main.manifest" />
+    <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\menu.c" />
+    <ClCompile Include="src\settings.c" />
+    <ClCompile Include="src\suncourse.c" />
+    <ClCompile Include="src\update.c" />
+    <ClCompile Include="src\winrt_helpers.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dark_mode_switcher.h" />
+    <ClInclude Include="src\common.h" />
+    <ClInclude Include="src\menu.h" />
+    <ClInclude Include="src\resource.h" />
+    <ClInclude Include="src\settings.h" />
+    <ClInclude Include="src\suncourse.h" />
+    <ClInclude Include="src\update.h" />
+    <ClInclude Include="src\winrt_helpers.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="src\main.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\icon.ico" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -108,10 +123,9 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>OneCore.lib;User32.lib;taskschd.lib;chkstk.obj</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies>OneCore.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -125,12 +139,13 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>OneCore.lib;User32.lib;taskschd.lib;chkstk.obj</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies>OneCore.lib;imm32.lib;ucrt.lib;msvcrt.lib;libvcruntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -143,10 +158,9 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>OneCore.lib;User32.lib;taskschd.lib;taskschd.lib;chkstk.obj</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies>OneCore.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -160,12 +174,13 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>OneCore.lib;User32.lib;taskschd.lib;chkstk.obj</AdditionalDependencies>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <AdditionalDependencies>OneCore.lib;imm32.lib;ucrt.lib;msvcrt.lib;libvcruntime.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -2,5 +2,6 @@
 /.vs
 /obj
 /out
+*.aps
 *.filters
 *.user
