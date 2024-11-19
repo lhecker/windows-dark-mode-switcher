@@ -29,6 +29,7 @@ void menu_apply_override(UpdateOverride override)
         CheckMenuItem(s_menu, map_override_to_item(s_last_update_override), MF_BYCOMMAND | MF_UNCHECKED);
     }
     CheckMenuItem(s_menu, map_override_to_item(override), MF_BYCOMMAND | MF_CHECKED);
+    s_last_update_override = override;
     update_run(override);
 }
 
@@ -55,19 +56,19 @@ static LRESULT CALLBACK window_callback(HWND hwnd, UINT message, WPARAM wparam, 
         switch (LOWORD(wparam)) {
         case ID_CONTEXTMENU_SWITCHAUTOMATICALLY:
             if (s_settings.switching_type == SettingsSwitchingType_Disabled) {
-                show_settings(hwnd);
+                settings_show_dialog(hwnd);
             } else {
                 menu_apply_override(UpdateOverride_None);
             }
             break;
         case ID_CONTEXTMENU_FORCEDARKMODE:
-            update_run(UpdateOverride_Dark);
+            menu_apply_override(UpdateOverride_Dark);
             break;
         case ID_CONTEXTMENU_FORCELIGHTMODE:
-            update_run(UpdateOverride_Light);
+            menu_apply_override(UpdateOverride_Light);
             break;
         case ID_CONTEXTMENU_SETTINGS:
-            show_settings(hwnd);
+            settings_show_dialog(hwnd);
             return 0;
         case ID_CONTEXTMENU_CLOSE:
             DestroyWindow(hwnd);
@@ -132,10 +133,6 @@ void menu_init(HINSTANCE instance)
     s_notification_data.uVersion = NOTIFYICON_VERSION_4;
     Shell_NotifyIconW(NIM_ADD, &s_notification_data);
     Shell_NotifyIconW(NIM_SETVERSION, &s_notification_data);
-
-    if (s_settings.switching_type != SettingsSwitchingType_Disabled) {
-        menu_apply_override(UpdateOverride_None);
-    }
 }
 
 void menu_deinit()

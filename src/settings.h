@@ -18,4 +18,6 @@ typedef struct Settings {
 extern Settings s_settings;
 
 void settings_init();
-void show_settings(HWND hwnd);
+void settings_show_dialog(HWND hwnd);
+bool settings_dialog_dispatch(MSG* msg);
+

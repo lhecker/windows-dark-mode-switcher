@@ -282,7 +282,7 @@ static INT_PTR settings_dialog_callback(HWND hwnd, UINT message, WPARAM wparam, 
     }
 }
 
-void show_settings(HWND hwnd)
+void settings_show_dialog(HWND hwnd)
 {
     if (s_hwnd_settings) {
         SetForegroundWindow(s_hwnd_settings);
@@ -290,4 +290,9 @@ void show_settings(HWND hwnd)
         s_hwnd_settings = CreateDialogParamW(NULL, MAKEINTRESOURCEW(IDD_SETTINGS), hwnd, &settings_dialog_callback, 0);
         ShowWindow(s_hwnd_settings, SW_SHOW);
     }
+}
+
+bool settings_dialog_dispatch(MSG* msg)
+{
+    return s_hwnd_settings ? IsDialogMessageW(s_hwnd_settings, msg) : false;
 }

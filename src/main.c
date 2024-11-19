@@ -28,7 +28,11 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR cmd_line,
     MSG msg;
     for (;;) {
         MsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_ALLINPUT, MWMO_ALERTABLE);
+
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (settings_dialog_dispatch(&msg)) {
+                continue;
+            }
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
             if (msg.message == WM_QUIT) {
