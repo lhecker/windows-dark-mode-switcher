@@ -1,104 +1,49 @@
 #include "suncourse.h"
 
+#include <assert.h>
 #include <math.h>
 
-/*
-Based on SUNRISET.C
-Released to the public domain by Paul Schlyter, December 1992
-Source: https://stjarnhimlen.se/comp/sunriset.c
-*/
-
-#define RADEG (180.0 / 3.14159265358979323846)
-
-static double sind(double x)
+static double rad(double x)
 {
-    return sin(x / RADEG);
+    return x * 0.017453292519943295;
 }
 
-static double cosd(double x)
+static double deg(double x)
 {
-    return cos(x / RADEG);
+    return x * 57.295779513082320876;
 }
 
-static double atan2d(double y, double x)
-{
-    return RADEG * atan2(y, x);
-}
+typedef struct SunsetSunrise {
+    double sunrise;
+    double sunset;
+} SunsetSunrise;
 
-static double revolution(double x)
+// These formulas are based on the NOAA Solar Calculator:
+//   https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
+// It in turn is based on the methods described in:
+//   Astronomical Algorithms, by Jean Meeus
+// It's used here, because it appears as if most applications use this formula nowadays.
+// I've mostly converted it to use radians instead of degrees,
+// but it could probably still be cleaned up further.
+static SunsetSunrise noaa_sunset_sunrise(double lat, double lon, double julian_day)
 {
-    return x - 360.0 * floor(x / 360.0);
-}
-
-static double rev180(double x)
-{
-    return (x - 360.0 * floor(x / 360.0 + 0.5));
-}
-
-static double GMST0(double d)
-{
-    return revolution((180.0 + 356.0470 + 282.9404) + (0.9856002585 + 4.70935E-5) * d);
-}
-
-static void sunpos(double d, double* lon, double* r)
-{
-    const double M = revolution(356.0470 + 0.9856002585 * d);
-    const double e = 0.016709 - 1.151E-9 * d;
-    const double E = M + e * RADEG * sind(M) * (1.0 + e * cosd(M));
-    const double x = cosd(E) - e;
-    const double y = sqrt(1.0 - e * e) * sind(E);
-    *r = sqrt(x * x + y * y);
-    const double v = atan2d(y, x);
-    const double w = 282.9404 + 4.70935E-5 * d;
-    *lon = v + w;
-    if (*lon >= 360.0)
-        *lon -= 360.0;
-}
-
-static void sun_RA_dec(double d, double* RA, double* dec, double* r)
-{
-    double lon;
-    sunpos(d, &lon, r);
-    double y = *r * sind(lon);
-    const double obl_ecl = 23.4393 - 3.563E-7 * d;
-    const double z = y * sind(obl_ecl);
-    y = y * cosd(obl_ecl);
-    const double x = *r * cosd(lon);
-    *RA = atan2d(y, x);
-    *dec = atan2d(z, sqrt(x * x + y * y));
-}
-
-static void calc_delta_values(double* p_rise, double* p_set, double lat, double lon, double d)
-{
-    const double sidtime = revolution(GMST0(d) + 180.0 + lon);
-    double sr, sRA, sdec;
-    sun_RA_dec(d, &sRA, &sdec, &sr);
-    const double tsouth = 12.0 - rev180(sidtime - sRA) / 15.0;
-    const double sradius = 0.2666 / sr;
-    const double altit = -35.0 / 60.0 - sradius;
-    const double cost = (sind(altit) - sind(lat) * sind(sdec)) / (cosd(lat) * cosd(sdec));
-
-    if (cost <= -1.0) {
-        // sun is always above horizon
-        *p_rise = 0;
-        *p_set = 24;
-    } else if (cost >= 1.0) {
-        // sun is always below horizon
-        *p_rise = 0;
-        *p_set = 0;
-    } else {
-        double td = RADEG * acos(cost) / 15.0;
-        *p_rise = tsouth - td;
-        *p_set = tsouth + td;
-    }
-}
-
-static int days_since_2000_01_01(FILETIME_QUAD ft)
-{
-    const ULONGLONG intervalsTo2000 = 125911584000000000ULL;
-    const ULONGLONG intervalsPerDay = 864000000000ULL;
-    ULONGLONG intervalsSince2000 = ft.QuadPart - intervalsTo2000;
-    return (int)(intervalsSince2000 / intervalsPerDay);
+    double julian_century = (julian_day - 2451545) / 36525;
+    double geom_mean_long_sun = rad(fmod(280.46646 + julian_century * (36000.76983 + julian_century * 0.0003032), 360));
+    double geom_mean_anom_sun = rad(357.52911 + julian_century * (35999.05029 - 0.0001537 * julian_century));
+    double eccent_earth_orbit = 0.016708634 - julian_century * (0.000042037 + 0.0000001267 * julian_century);
+    double sun_eq_of_ctr = sin(geom_mean_anom_sun) * rad(1.914602 - julian_century * (0.004817 + 0.000014 * julian_century)) + sin(2 * geom_mean_anom_sun) * rad(0.019993 - 0.000101 * julian_century) + sin(3 * geom_mean_anom_sun) * rad(0.000289);
+    double sun_true_long = geom_mean_long_sun + sun_eq_of_ctr;
+    double sun_app_long = sun_true_long - rad(0.00569) - rad(0.00478) * sin(rad(125.04 - 1934.136 * julian_century));
+    double mean_obliq_ecliptic = rad(23 + (26 + (21.448 - julian_century * (46.815 + julian_century * (0.00059 - julian_century * 0.001813))) / 60) / 60);
+    double obliq_corr = mean_obliq_ecliptic + rad(0.00256) * cos(rad(125.04 - 1934.136 * julian_century));
+    double sun_declin = asin(sin(obliq_corr) * sin(sun_app_long));
+    double var_y = tan(obliq_corr / 2) * tan(obliq_corr / 2);
+    double eq_of_time = 4 * deg(var_y * sin(2 * geom_mean_long_sun) - 2 * eccent_earth_orbit * sin(geom_mean_anom_sun) + 4 * eccent_earth_orbit * var_y * sin(geom_mean_anom_sun) * cos(2 * geom_mean_long_sun) - 0.5 * var_y * var_y * sin(4 * geom_mean_long_sun) - 1.25 * eccent_earth_orbit * eccent_earth_orbit * sin(2 * geom_mean_anom_sun));
+    double ha_sunrise = deg(acos(cos(rad(90.833)) / (cos(rad(lat)) * cos(sun_declin)) - tan(rad(lat)) * tan(sun_declin)));
+    double solar_noon = (720 - 4 * lon - eq_of_time) / 60;
+    double sunrise = solar_noon - ha_sunrise * 4 / 60;
+    double sunset = solar_noon + ha_sunrise * 4 / 60;
+    return (SunsetSunrise){sunrise, sunset};
 }
 
 bool suncourse_is_daytime(float lat, float lon, FILETIME_QUAD* next_update)
@@ -109,18 +54,16 @@ bool suncourse_is_daytime(float lat, float lon, FILETIME_QUAD* next_update)
     FILETIME_QUAD now_ft = {};
     SystemTimeToFileTime(&now, &now_ft.FtPart);
 
-    // FILETIME contains the 100-nanosecond intervals since January 1, 1601 (UTC).
-    // Convert it to days since January 0, 2000 (UTC).
-    const double d = days_since_2000_01_01(now_ft) + 0.5 - lon / 360.0;
+    const ULONGLONG days_since_1601 = now_ft.QuadPart / 864000000000;
+    // 2305813.5 is the Julian Day of 1601-01-01 00:00:00 UTC.
+    const double julian_day = days_since_1601 + 2305813.5;
 
-    double rise_hours, set_hours;
-    calc_delta_values(&rise_hours, &set_hours, lat, lon, d);
-
+    const SunsetSunrise ss = noaa_sunset_sunrise(lat, lon, julian_day);
     const double now_h = now.wHour + now.wMinute / 60.0 + now.wSecond / 3600.0;
-    const bool is_daytime = rise_hours <= now_h && now_h < set_hours;
+    const bool is_daytime = ss.sunrise <= now_h && now_h < ss.sunset;
 
     // If it's daytime, the next change is the sunset and vice versa.
-    double next_h = is_daytime ? set_hours : rise_hours;
+    double next_h = is_daytime ? ss.sunset : ss.sunrise;
     // Add 30 seconds as wiggle room for the timer.
     next_h += 30.0 / 3600.0;
     // Ensure it's [0, 24).
