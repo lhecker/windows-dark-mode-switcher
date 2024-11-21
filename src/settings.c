@@ -255,7 +255,7 @@ static INT_PTR settings_dialog_callback(HWND hwnd, UINT message, WPARAM wparam, 
             [[fallthrough]];
         case IDCANCEL:
             s_hwnd_settings = NULL;
-            EndDialog(hwnd, 0);
+            DestroyWindow(hwnd);
             return TRUE;
         case IDC_ENABLE_AUTOMATIC_SWITCHING:
         case IDC_ENABLE_CUSTOM_HOURS:
