@@ -237,7 +237,6 @@ cleanup:
     SAFE_RELEASE(geolocator2);
     SAFE_RELEASE(geolocator);
     SAFE_RELEASE(geolocator_inspectable);
-    RoUninitialize();
 }
 
 static INT_PTR settings_dialog_callback(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
