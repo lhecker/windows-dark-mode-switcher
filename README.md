@@ -4,10 +4,13 @@ This application allows you to automatically switch between light and dark mode 
 
 ## Installation
 
-Simply put it into this directory:
-```
-%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
-```
+* Download it here: https://github.com/lhecker/windows-dark-mode-switcher/releases/tag/v0.1.0
+* Unzip the archive
+* Put `dark-mode-switcher.exe` into this directory:
+  ```
+  %APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
+  ```
+* You can delete the `dark-mode-switcher.pdb` file if you don't need it. It's meant for debugging.
 
 ## Example screenshot
 
