@@ -7,7 +7,7 @@
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR cmd_line, int cmd_show)
 {
     // As soon as you CreateWindow() an IME window is created, even if the IME is never needed.
-    // Disabling this behavior saves ~10% of our startup cost. God knows why it's not lazy init.
+    // Disabling this behavior saves ~10% of our startup cost.
     ImmDisableIME(-1);
 
     // Make sure the context menu supports dark mode (Windows 10, 1903 or later).
