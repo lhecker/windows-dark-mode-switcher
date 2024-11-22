@@ -16,8 +16,7 @@ static bool custom_is_daytime(FILETIME_QUAD* next_update)
 
     const DWORD time = now.wHour * 100 + now.wMinute;
     const bool is_daytime = time >= s_settings.sunrise && time < s_settings.sunset;
-
-    DWORD next_time = is_daytime ? s_settings.sunset : s_settings.sunrise;
+    const DWORD next_time = is_daytime ? s_settings.sunset : s_settings.sunrise;
 
     SYSTEMTIME next = now;
     next.wHour = (WORD)(next_time / 100);
