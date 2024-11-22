@@ -11,7 +11,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR cmd_line,
     ImmDisableIME(-1);
 
     // Make sure the context menu supports dark mode (Windows 10, 1903 or later).
-    // An official API does not exist, owing to the fantastic shell team.
+    // An official API does not exist and there's no alternative. Thanks, shell team.
     // Leaked here: https://github.com/ysc3839/win32-darkmode/blob/master/win32-darkmode/DarkMode.h
     const HANDLE uxtheme = LoadLibraryExW(L"uxtheme.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
     bool(WINAPI* const SetPreferredAppMode)(int) = (bool(WINAPI*)(int))GetProcAddress(uxtheme, MAKEINTRESOURCEA(135));
