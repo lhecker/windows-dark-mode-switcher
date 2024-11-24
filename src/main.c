@@ -15,7 +15,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE prev_instance, PWSTR cmd_line,
     // Leaked here: https://github.com/ysc3839/win32-darkmode/blob/master/win32-darkmode/DarkMode.h
     const HANDLE uxtheme = LoadLibraryExW(L"uxtheme.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
     bool(WINAPI* const SetPreferredAppMode)(int) = (bool(WINAPI*)(int))GetProcAddress(uxtheme, MAKEINTRESOURCEA(135));
-    SetPreferredAppMode(2); // PreferredAppMode::AllowDark
+    SetPreferredAppMode(1); // PreferredAppMode::AllowDark
 
     settings_init();
     update_init();
