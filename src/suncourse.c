@@ -67,7 +67,7 @@ bool suncourse_is_daytime(float lat, float lon, FILETIME_QUAD* next_update)
     // Add 30 seconds as wiggle room for the timer.
     next_h += 30.0 / 3600.0;
     // Ensure it's [0, 24).
-    next_h = fmod(next_h, 24.0);
+    next_h = fmod(next_h + 24.0, 24.0);
 
     double hours;
     double minutes = modf(next_h, &hours) * 60;
