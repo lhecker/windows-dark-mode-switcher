@@ -48,18 +48,18 @@ static SunsetSunrise noaa_sunset_sunrise(double lat, double lon, double julian_d
 
 bool suncourse_is_daytime(float lat, float lon, FILETIME_QUAD* next_update)
 {
-    SYSTEMTIME now;
-    GetSystemTime(&now);
+    FILETIME_QUAD now = {};
+    GetSystemTimeAsFileTime(&now.FtPart);
 
-    FILETIME_QUAD now_ft = {};
-    SystemTimeToFileTime(&now, &now_ft.FtPart);
+    SYSTEMTIME now_st;
+    FileTimeToSystemTime(&now.FtPart, &now_st);
 
-    const ULONGLONG days_since_1601 = now_ft.QuadPart / 864000000000;
+    const ULONGLONG days_since_1601 = now.QuadPart / 864000000000;
     // 2305813.5 is the Julian Day of 1601-01-01 00:00:00 UTC.
     const double julian_day = days_since_1601 + 2305813.5;
 
     const SunsetSunrise ss = noaa_sunset_sunrise(lat, lon, julian_day);
-    const double now_h = now.wHour + now.wMinute / 60.0 + now.wSecond / 3600.0;
+    const double now_h = now_st.wHour + now_st.wMinute / 60.0 + now_st.wSecond / 3600.0;
     const bool is_daytime = ss.sunrise <= now_h && now_h < ss.sunset;
 
     // If it's daytime, the next change is the sunset and vice versa.
@@ -72,20 +72,20 @@ bool suncourse_is_daytime(float lat, float lon, FILETIME_QUAD* next_update)
     double hours;
     double minutes = modf(next_h, &hours) * 60;
 
-    SYSTEMTIME next = now;
-    next.wHour = (WORD)lround(hours);
-    next.wMinute = (WORD)lround(minutes);
-    next.wSecond = 0;
-    next.wMilliseconds = 0;
+    SYSTEMTIME next_st = now_st;
+    next_st.wHour = (WORD)lround(hours);
+    next_st.wMinute = (WORD)lround(minutes);
+    next_st.wSecond = 0;
+    next_st.wMilliseconds = 0;
 
-    FILETIME_QUAD next_ft = {};
-    SystemTimeToFileTime(&next, &next_ft.FtPart);
+    FILETIME_QUAD next = {};
+    SystemTimeToFileTime(&next_st, &next.FtPart);
 
     // If the time ended before `now` it's tomorrow.
-    if (next_ft.QuadPart < now_ft.QuadPart) {
-        next_ft.QuadPart += 864000000000;
+    if (next.QuadPart < now.QuadPart) {
+        next.QuadPart += 864000000000;
     }
 
-    *next_update = next_ft;
+    *next_update = next;
     return is_daytime;
 }
