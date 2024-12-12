@@ -64,17 +64,15 @@ bool suncourse_is_daytime(float lat, float lon, FILETIME_QUAD* next_update)
 
     // If it's daytime, the next change is the sunset and vice versa.
     double next_h = is_daytime ? ss.sunset : ss.sunrise;
+    // Add 24 hours, because next_h may be negative.
     // Add 30 seconds as wiggle room for the timer.
-    next_h += 30.0 / 3600.0;
-    // Ensure it's [0, 24).
-    next_h = fmod(next_h + 24.0, 24.0);
-
-    double hours;
-    double minutes = modf(next_h, &hours) * 60;
+    long next_min = lround(next_h * 60.0 + 24.0 * 60.0 + 0.5);
+    // Ensure it's [0, 24) hours.
+    next_min = next_min % 1440;
 
     SYSTEMTIME next_st = now_st;
-    next_st.wHour = (WORD)lround(hours);
-    next_st.wMinute = (WORD)lround(minutes);
+    next_st.wHour = (WORD)(next_min / 60);
+    next_st.wMinute = (WORD)(next_min % 60);
     next_st.wSecond = 0;
     next_st.wMilliseconds = 0;
 
