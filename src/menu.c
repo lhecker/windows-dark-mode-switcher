@@ -7,7 +7,13 @@
 #include <shellapi.h>
 
 static HMENU s_menu;
-static NOTIFYICONDATAW s_notification_data;
+static NOTIFYICONDATAW s_notification_data = {
+    .cbSize = sizeof(NOTIFYICONDATAW),
+    .uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP,
+    .uCallbackMessage = WM_NOTIFICATION_ICON_CALLBACK,
+    .szTip = L"Dark Mode Switcher",
+    .uVersion = NOTIFYICON_VERSION_4
+};
 static UINT s_wm_taskbar_created;
 static int s_last_update_override = -1;
 
@@ -124,13 +130,8 @@ void menu_init(HINSTANCE instance)
     s_menu = GetSubMenu(LoadMenuW(NULL, MAKEINTRESOURCEW(IDR_MENU1)), 0);
     s_wm_taskbar_created = RegisterWindowMessageW(L"TaskbarCreated");
 
-    s_notification_data.cbSize = sizeof(s_notification_data);
     s_notification_data.hWnd = hwnd;
-    s_notification_data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
-    s_notification_data.uCallbackMessage = WM_NOTIFICATION_ICON_CALLBACK;
     s_notification_data.hIcon = wcex.hIcon;
-    wcscpy_s(&s_notification_data.szTip[0], ARRAYSIZE(s_notification_data.szTip), L"Dark Mode Switcher");
-    s_notification_data.uVersion = NOTIFYICON_VERSION_4;
     Shell_NotifyIconW(NIM_ADD, &s_notification_data);
     Shell_NotifyIconW(NIM_SETVERSION, &s_notification_data);
 }
