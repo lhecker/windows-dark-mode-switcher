@@ -2,10 +2,10 @@
 
 #include <winstring.h>
 
-HSTRING hstring_reference(HSTRING_HEADER* header, const wchar_t* str)
+HSTRING hstring_reference(HSTRING_HEADER* header, const wchar_t* str, UINT32 len)
 {
     HSTRING hstr;
-    WindowsCreateStringReference(str, (UINT32)wcsnlen(str, 0xffffffff), header, &hstr);
+    WindowsCreateStringReference(str, len, header, &hstr);
     return hstr;
 }
 
