@@ -27,7 +27,6 @@ struct IAsyncOperationCompletedHandlerWrapper {
     GUID iid;
     HRESULT(*callback)(void* context, void* asyncInfo, AsyncStatus asyncStatus);
     void* context;
-    LONG ref_count;
     // clang-format on
 };
 
@@ -40,7 +39,6 @@ static HRESULT STDMETHODCALLTYPE IAsyncOperationCompletedHandlerWrapper_QueryInt
     }
     if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IAgileObject) || IsEqualGUID(riid, &self->iid)) {
         *ppvObject = self;
-        InterlockedIncrement(&self->ref_count);
         return S_OK;
     }
     *ppvObject = NULL;
@@ -49,16 +47,12 @@ static HRESULT STDMETHODCALLTYPE IAsyncOperationCompletedHandlerWrapper_QueryInt
 
 static ULONG STDMETHODCALLTYPE IAsyncOperationCompletedHandlerWrapper_AddRef(IAsyncOperationCompletedHandlerWrapper* self)
 {
-    return InterlockedIncrement(&self->ref_count);
+    return 1;
 }
 
 static ULONG STDMETHODCALLTYPE IAsyncOperationCompletedHandlerWrapper_Release(IAsyncOperationCompletedHandlerWrapper* self)
 {
-    LONG ref_count = InterlockedDecrement(&self->ref_count);
-    if (ref_count <= 0) {
-        CoTaskMemFree(self);
-    }
-    return ref_count;
+    return 1;
 }
 
 static HRESULT STDMETHODCALLTYPE IAsyncOperationCompletedHandlerWrapper_Invoke(IAsyncOperationCompletedHandlerWrapper* self, void* asyncInfo, AsyncStatus asyncStatus)
@@ -75,11 +69,9 @@ void* create_wrapper_for_IAsyncOperationCompletedHandler(GUID iid, HRESULT (*cal
         .Invoke = IAsyncOperationCompletedHandlerWrapper_Invoke,
     };
 
-    IAsyncOperationCompletedHandlerWrapper* wrapper = CoTaskMemAlloc(sizeof(IAsyncOperationCompletedHandlerWrapper));
-    wrapper->vtable = &vtable;
-    wrapper->iid = iid;
-    wrapper->callback = callback;
-    wrapper->context = context;
-    wrapper->ref_count = 0;
-    return wrapper;
+    static IAsyncOperationCompletedHandlerWrapper wrapper = {.vtable = &vtable};
+    wrapper.iid = iid;
+    wrapper.callback = callback;
+    wrapper.context = context;
+    return &wrapper;
 }
