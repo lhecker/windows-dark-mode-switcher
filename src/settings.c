@@ -44,20 +44,18 @@ static float reg_read_float(HKEY key, const wchar_t* name, float default_value)
         return default_value;
     }
 
-    wchar_t buffer[64];
-    DWORD size = sizeof(buffer);
-    if (RegGetValueW(key, NULL, name, RRF_RT_REG_SZ | RRF_ZEROONFAILURE, NULL, &buffer[0], &size) != ERROR_SUCCESS) {
+    float value = 0.f;
+    DWORD size = sizeof(value);
+    if (RegGetValueW(key, NULL, name, RRF_RT_REG_BINARY, NULL, &value, &size) != ERROR_SUCCESS) {
         return default_value;
     }
 
-    return wcstof(buffer, NULL);
+    return value;
 }
 
 static void reg_write_float(HKEY key, const wchar_t* name, float value)
 {
-    wchar_t buffer[64];
-    int len = swprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), L"%.6f", value);
-    RegSetValueExW(key, name, 0, REG_SZ, (const BYTE*)&buffer[0], (len + 1) * sizeof(wchar_t));
+    RegSetValueExW(key, name, 0, REG_BINARY, (const BYTE*)&value, sizeof(value));
 }
 
 static DWORD sanitize_time(DWORD time)
