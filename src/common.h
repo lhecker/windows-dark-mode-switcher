@@ -11,7 +11,6 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define clamp(x, a, b) (x) < (a) ? (a) : ((x) > (b) ? (b) : (x))
-#define static_strlen(str) (ARRAYSIZE(str) - 1)
 
 // If Failed (goto) Cleanup
 #define IFC(x)            \

@@ -223,7 +223,7 @@ static void update_geolocation(HWND hwnd)
     HSTRING_HEADER header;
     HRESULT hr = S_OK;
 
-    IFC(RoActivateInstance(hstring_reference(&header, RuntimeClass_Windows_Devices_Geolocation_Geolocator, static_strlen(RuntimeClass_Windows_Devices_Geolocation_Geolocator)), &geolocator_inspectable));
+    IFC(RoActivateInstance(hstring_reference(&header, RuntimeClass_Windows_Devices_Geolocation_Geolocator), &geolocator_inspectable));
     IFC(geolocator_inspectable->lpVtbl->QueryInterface(geolocator_inspectable, &IID_IGeolocator, (void**)&geolocator));
     IFC(geolocator_inspectable->lpVtbl->QueryInterface(geolocator_inspectable, &IID_IGeolocator2, (void**)&geolocator2));
 
