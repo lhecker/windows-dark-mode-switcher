@@ -11,24 +11,12 @@ static NOTIFYICONDATAW s_notification_data;
 static UINT s_wm_taskbar_created;
 static int s_last_update_override = -1;
 
-static int map_override_to_item(UpdateOverride override)
-{
-    switch (override) {
-    case UpdateOverride_Light:
-        return ID_CONTEXTMENU_FORCELIGHTMODE;
-    case UpdateOverride_Dark:
-        return ID_CONTEXTMENU_FORCEDARKMODE;
-    default:
-        return ID_CONTEXTMENU_SWITCHAUTOMATICALLY;
-    }
-}
-
 void menu_apply_override(UpdateOverride override)
 {
     if (s_last_update_override >= 0) {
-        CheckMenuItem(s_menu, map_override_to_item(s_last_update_override), MF_BYCOMMAND | MF_UNCHECKED);
+        CheckMenuItem(s_menu, s_last_update_override, MF_BYCOMMAND | MF_UNCHECKED);
     }
-    CheckMenuItem(s_menu, map_override_to_item(override), MF_BYCOMMAND | MF_CHECKED);
+    CheckMenuItem(s_menu, override, MF_BYCOMMAND | MF_CHECKED);
     s_last_update_override = override;
     update_run(override);
 }
