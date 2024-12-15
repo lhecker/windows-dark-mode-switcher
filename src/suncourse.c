@@ -41,8 +41,9 @@ static SunsetSunrise noaa_sunset_sunrise(double lat, double lon, double julian_d
     double eq_of_time = 4 * deg(var_y * sin(2 * geom_mean_long_sun) - 2 * eccent_earth_orbit * sin(geom_mean_anom_sun) + 4 * eccent_earth_orbit * var_y * sin(geom_mean_anom_sun) * cos(2 * geom_mean_long_sun) - 0.5 * var_y * var_y * sin(4 * geom_mean_long_sun) - 1.25 * eccent_earth_orbit * eccent_earth_orbit * sin(2 * geom_mean_anom_sun));
     double ha_sunrise = deg(acos(cos(rad(90.833)) / (cos(rad(lat)) * cos(sun_declin)) - tan(rad(lat)) * tan(sun_declin)));
     double solar_noon = (720 - 4 * lon - eq_of_time) / 60;
-    double sunrise = solar_noon - ha_sunrise * 4 / 60;
-    double sunset = solar_noon + ha_sunrise * 4 / 60;
+    double half_daytime = ha_sunrise * 4 / 60;
+    double sunrise = solar_noon - half_daytime;
+    double sunset = solar_noon + half_daytime;
     return (SunsetSunrise){sunrise, sunset};
 }
 
