@@ -1,14 +1,5 @@
 #include "winrt_helpers.h"
 
-#include <winstring.h>
-
-HSTRING hstring_reference(HSTRING_HEADER* header, const wchar_t* str)
-{
-    HSTRING hstr;
-    WindowsCreateStringReference(str, (UINT32)wcsnlen(str, 0xffffffff), header, &hstr);
-    return hstr;
-}
-
 typedef struct IAsyncOperationCompletedHandlerWrapper IAsyncOperationCompletedHandlerWrapper;
 
 typedef struct IAsyncOperationCompletedHandlerWrapperVtable {
