@@ -12,7 +12,7 @@ static bool custom_is_daytime(FILETIME_QUAD* next_update)
 
     SYSTEMTIME now;
     FileTimeToSystemTime(&now_ft.FtPart, &now);
-    SystemTimeToTzSpecificLocalTime(NULL, &now, &now);
+    SystemTimeToTzSpecificLocalTimeEx(NULL, &now, &now);
 
     const DWORD time = now.wHour * 100 + now.wMinute;
     const bool is_daytime = time >= s_settings.sunrise && time < s_settings.sunset;
@@ -25,7 +25,7 @@ static bool custom_is_daytime(FILETIME_QUAD* next_update)
     next.wMilliseconds = 0;
 
     FILETIME_QUAD next_ft = {};
-    TzSpecificLocalTimeToSystemTime(NULL, &next, &next);
+    TzSpecificLocalTimeToSystemTimeEx(NULL, &next, &next);
     SystemTimeToFileTime(&next, &next_ft.FtPart);
 
     // If the time ended before `now` it's tomorrow.
