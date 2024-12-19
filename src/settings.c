@@ -205,7 +205,7 @@ static HRESULT geolocation_callback(void* context, __FIAsyncOperation_1_Windows_
     IFC(coord->lpVtbl->get_Longitude(coord, &longitude));
 
     float coordinates[2] = {(float)latitude, (float)longitude};
-    SendMessageW(context, WM_GEOLOCATION_UPDATED, 0, (LPARAM)&coordinates);
+    SendMessageW(context, WM_GEOLOCATION_UPDATED, 0, (LPARAM)coordinates);
 
 cleanup:
     SAFE_RELEASE(coord);
