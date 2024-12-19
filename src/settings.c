@@ -185,7 +185,12 @@ static void update_enabled_disabled_dialog_items(HWND hwnd)
 
 static HRESULT geolocation_callback(void* context, __FIAsyncOperation_1_Windows__CDevices__CGeolocation__CGeoposition* operation, AsyncStatus status)
 {
+    if (status == Started) {
+        return S_OK;
+    }
+
     if (status != Completed) {
+        SendMessageW(context, WM_GEOLOCATION_FAILED, 0, 0);
         return S_OK;
     }
 
@@ -200,7 +205,7 @@ static HRESULT geolocation_callback(void* context, __FIAsyncOperation_1_Windows_
     IFC(coord->lpVtbl->get_Longitude(coord, &longitude));
 
     float coordinates[2] = {(float)latitude, (float)longitude};
-    SendMessageW(context, WM_GEOLOCATION_UPDATED, 0, (LPARAM)&coordinates);
+    SendMessageW(context, WM_GEOLOCATION_UPDATED, 0, (LPARAM)coordinates);
 
 cleanup:
     SAFE_RELEASE(coord);
@@ -276,6 +281,15 @@ static INT_PTR settings_dialog_callback(HWND hwnd, UINT message, WPARAM wparam, 
         EnableWindow(GetDlgItem(hwnd, IDC_GEOLOCATION_USE_CURRENT), TRUE);
         return 0;
     }
+    case WM_GEOLOCATION_FAILED:
+        MessageBoxW(
+            hwnd,
+            L"To use this feature, make sure that location service is enabled for desktop apps on your computer.",
+            L"Unable to determine the current location at this time",
+            MB_OK | MB_ICONINFORMATION
+        );
+        EnableWindow(GetDlgItem(hwnd, IDC_GEOLOCATION_USE_CURRENT), TRUE);
+        return 0;
     default:
         return FALSE;
     }
