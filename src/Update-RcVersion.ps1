@@ -35,7 +35,6 @@
   content can be instantly checked in the terminal window. Changed lines are
   highlighted.
 #>
-#Requires -Version 7
 [CmdletBinding()]
 param (
   [Parameter(Mandatory=$true)][UInt16]$major,
@@ -47,14 +46,18 @@ param (
 begin {
   $regex = '(^[^/]*\b(?:file|product)version[", ]+)\d+([,.])\d+([,.])\d+([,.])\d+\b(.*$)'
   $subst = "`${1}$major`${2}$minor`${3}$patch`${4}$revision`${5}"
+  $e = [Char]27
 }
 process {
   ForEach ($rcfile in $rcfiles) {
     if ((-not (Test-Path $rcfile -PathType Leaf)) -or ($rcfile -inotlike '*.rc')) {continue}
     (Get-Content $rcfile) -ireplace $regex, $subst | Tee-Object $rcfile |
-     ForEach-Object {"`e[90m | `e[0m$($_ -ireplace $regex, "`e[97;41m`${0}`e[0m")"} -Begin {"`n`e[90m Updated `"$rcfile`":`e[0m"} -End {''}
+     ForEach-Object {"$e[90m | $e[0m$($_ -ireplace $regex, "$e[97;41m`${0}$e[0m")"} -Begin {"`n$e[90m Updated `"$rcfile`":$e[0m"} -End {''}
   }
 }
 end {
-  if ([System.Diagnostics.Process]::GetCurrentProcess().Parent.ProcessName -eq 'explorer') {Pause}
+  $instances = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue -Property @('Name', 'ParentProcessId', 'ProcessId')
+  $parentpid = $instances | Where-Object ProcessId -eq $PID | Select-Object -ExpandProperty ParentProcessId
+  $parentname = $instances | Where-Object ProcessId -eq $parentpid | Select-Object -ExpandProperty Name
+  if ($parentname -eq 'explorer.exe') {pause}
 }
