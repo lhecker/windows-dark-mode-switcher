@@ -56,8 +56,10 @@ process {
   }
 }
 end {
-  $instances = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue -Property @('Name', 'ParentProcessId', 'ProcessId')
-  $parentpid = $instances | Where-Object ProcessId -eq $PID | Select-Object -ExpandProperty ParentProcessId
-  $parentname = $instances | Where-Object ProcessId -eq $parentpid | Select-Object -ExpandProperty Name
-  if ($parentname -eq 'explorer.exe') {pause}
+  try {
+    $instances = Get-CimInstance Win32_Process -ErrorAction Stop -Property @('Name', 'ParentProcessId', 'ProcessId')
+    $parentpid = $instances | Where-Object ProcessId -eq $PID | Select-Object -ExpandProperty ParentProcessId
+    $parentname = $instances | Where-Object ProcessId -eq $parentpid | Select-Object -ExpandProperty Name
+    if ($parentname -imatch '.+cmd|commander|dopus|far|files|plorer|q-dir') {pause}
+  } catch {exit 0}
 }
